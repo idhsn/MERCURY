@@ -57,6 +57,20 @@
                 <h1>Contacts</h1>
                 <a href="{{ route('contacts.create') }}" class="add-btn">+</a>
             </div>
+            <!-- Group Filter - SIMPLE VERSION -->
+            <div style="margin-bottom: 15px;">
+                <select id="group-filter" style="padding: 10px; border-radius: 10px; border: 1px solid #ddd; font-size: 16px;">
+                    <option value="">All Groups</option>
+                    @foreach(App\Models\Group::all() as $group)
+                        <option value="{{ $group->id }}">
+                            {{ $group->name }} ({{ $group->contacts->count() }})
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <!-- Your existing search bar here -->
+
             <div class="search-container">
                 <span class="search-icon">🔍</span>
                 <input type="text" id="search" class="search-box" placeholder="Search">
@@ -70,19 +84,44 @@
 
 
     <script>
-    $(document).ready(function(){
-        $('#search').on('keyup', function(){
-            let searchValue = $(this).val();
-            $.ajax({
-                url: "{{ route('contacts.search') }}",
-                type: "GET",
-                data: { 'search': searchValue },
-                success: function(response){
-                    $('#contact-list').html(response);
-                }
-            });
+$(document).ready(function(){
+    // Search functionality
+    $('#search').on('keyup', function(){
+        let searchValue = $(this).val();
+        let groupId = $('#group-filter').val();
+        
+        $.ajax({
+            url: "{{ route('contacts.search') }}",
+            type: "GET",
+            data: { 
+                'search': searchValue,
+                'group': groupId 
+            },
+            success: function(response){
+                $('#contact-list').html(response);
+            }
         });
     });
-    </script>
+    
+    // Group filter functionality
+    $('#group-filter').on('change', function(){
+        let groupId = $(this).val();
+        let searchValue = $('#search').val();
+        
+        $.ajax({
+            url: "{{ route('contacts.search') }}", // Reuse the same search method
+            type: "GET",
+            data: { 
+                'search': searchValue,
+                'group': groupId 
+            },
+            success: function(response){
+                $('#contact-list').html(response);
+            }
+        });
+    });
+});
+</script>
+
 </body>
 </html>

@@ -13,6 +13,7 @@ class ContactController extends Controller
     public function index()
 {
     $contacts = Contact::with('group')->get();
+    $groups = Group::all();
     return view('contacts.index', compact('contacts'));
 }
 
@@ -25,7 +26,6 @@ class ContactController extends Controller
     $groups = Group::all();
     return view('contacts.create', compact('groups'));
 }
-
 
     /**
      * Store a newly created resource in storage.
@@ -91,25 +91,42 @@ class ContactController extends Controller
 
         return redirect()->route('contacts.index')->with('success', 'Contact deleted successfully!');
     }
-    /**
-     * Dynamic Search stuff ts
-     */
-    public function search(Request $request)
+    
+
+    
+public function search(Request $request)
 {
     $search = $request->input('search');
+    $groupId = $request->input('group');
     
-    if($search != '') {
-        $contacts = Contact::where('name', 'like', '%'.$search.'%')
-                            ->orWhere('email', 'like', '%'.$search.'%')
-                            ->with('group')
-                            ->get();
-    } else {
-        $contacts = Contact::with('group')->get();
+    $query = Contact::with('group');
+    
+    if($search) {
+        $query->where(function($q) use ($search) {
+            $q->where('name', 'like', '%'.$search.'%')
+              ->orWhere('email', 'like', '%'.$search.'%');
+        });
     }
     
-    // Return ONLY the HTML (no extra whitespace)
+    if($groupId) {
+        $query->where('group_id', $groupId);
+    }
+    
+    $contacts = $query->get();
+    
     return view('contacts.partials.list', compact('contacts'));
 }
+
+
+public function filterByGroup($groupId)
+{
+    $contacts = Contact::where('group_id', $groupId)
+                      ->with('group')
+                      ->get();
+    
+    return view('contacts.partials.list', compact('contacts'));
+}
+
 
 
 
